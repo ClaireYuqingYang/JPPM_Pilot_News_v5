@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>X News Feed (Demo)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000; color: #e7e9ea;
+    }
+
+    .x-layout {
+      display: flex; flex-direction: row; justify-content: center; align-items: flex-start;
+      min-height: 100vh; width: 100vw; overflow-x: auto; background: #000;
+    }
+
+    /* Left Sidebar */
+    .sidebar-left {
+      width: 250px; min-width: 250px; max-width: 250px;
+      background: #000; border-right: 1px solid #2f3336;
+      display: flex; flex-direction: column; align-items: flex-end;
+      padding: 8px 0 4px 0; height: 92vh; position: sticky; top: 0; z-index: 100;
+    }
+    .x-logo-main { font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 24px; align-self: flex-start; padding-left: 32px; cursor: pointer; }
+    .x-nav-vertical { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+    .x-nav-vertical .nav-item {
+      display: flex; align-items: center; gap: 18px; font-size: 1.18rem; color: #e7e9ea; font-weight: 500;
+      padding: 12px 28px 12px 32px; border-radius: 32px; cursor: pointer; transition: background 0.18s; text-decoration: none;
+    }
+    .x-nav-vertical .nav-item.active, .x-nav-vertical .nav-item:hover {
+      background: #16181c; color: #1d9bf0; font-weight: 700;
+    }
+    .post-btn {
+      margin: 18px 0 16px 0; width: 80%; align-self: center; background: #181818; color: #fff; border: none;
+      border-radius: 32px; font-size: 1.1rem; font-weight: 700; padding: 12px 0; cursor: pointer; transition: background 0.18s;
+    }
+    .post-btn:hover { background: #222; }
+    .account-mini {
+      display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 10px 16px; border-radius: 32px;
+      background: #16181c; width: 90%; align-self: flex-start; cursor: pointer;
+    }
+    .account-mini .avatar { width: 40px; height: 40px; border-radius: 50%; }
+    .account-info { display: flex; flex-direction: column; line-height: 1.1; }
+    .account-name { font-weight: 700; color: #e7e9ea; font-size: 15px; }
+    .account-handle { color: #71767b; font-size: 14px; }
+    .account-more { margin-left: auto; color: #71767b; font-size: 1.5rem; }
+
+    /* Main */
+    .main-content {
+      width: 680px; min-width: 0; background: #000; min-height: 100vh; height: 100vh;
+      border-right: 1px solid #2f3336; display: flex; flex-direction: column; align-items: stretch; flex-shrink: 1; overflow-x: auto;
+    }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px 0 20px; background: #000; position: sticky; top: 0; z-index: 10;
+    }
+    .search-bar-main {
+      display: flex; align-items: center; background: #16181c; border: 1px solid #2f3336; border-radius: 32px; padding: 8px 16px; width: 60%; color: #e7e9ea;
+    }
+    .search-bar-main input {
+      background: transparent; border: none; outline: none; color: #e7e9ea; font-size: 1rem; width: 100%; margin-left: 8px;
+    }
+    .search-icon { font-size: 1.2rem; color: #71767b; }
+
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .pid-input {
+      background: #16181c; border: 1px solid #2f3336; border-radius: 16px; padding: 6px 10px; color: #e7e9ea; width: 180px;
+    }
+    .export-btn {
+      background: #1d9bf0; color: #fff; border: none; padding: 8px 12px; border-radius: 18px; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    }
+    .export-btn:hover { background: #1a8cd8; }
+    .settings-icon { font-size: 1.4rem; color: #71767b; cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.18s; }
+    .settings-icon:hover { background: #222; color: #1d9bf0; }
+
+    .feed-list { display: flex; flex-direction: column; gap: 16px; padding: 12px 0 24px 0; }
+
+    /* Tweet card */
+    .tweet-card {
+      background: #16181c; border-radius: 16px; padding: 16px 20px 12px 20px; border: 1px solid #2f3336;
+      display: flex; flex-direction: column; gap: 10px; transition: filter 0.2s;
+    }
+    .tweet-card.filtered {
+      position: relative; filter: brightness(0.6) grayscale(0.2);
+    }
+    .tweet-card.filtered::after {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+      border-radius: 16px; pointer-events: none; z-index: 2;
+    }
+    .tweet-card.filtered:hover { filter: brightness(0.6) grayscale(0.2); }
+    .tweet-card.filtered:hover::after { background: rgba(0,0,0,0.5); }
+
+    .tweet-header { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+    .tweet-header .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 8px; }
+    .tweet-username { font-weight: 700; color: #e7e9ea; margin-right: 4px; }
+    .verified { color: #1d9bf0; font-size: 1rem; margin-left: 2px; }
+    .tweet-handle, .tweet-time, .tweet-dot { color: #71767b; font-weight: 400; font-size: 15px; }
+    .tweet-actions-right { margin-left: auto; color: #71767b; font-size: 1.2rem; cursor: pointer; display: flex; gap: 8px; }
+
+    .tweet-body { color: #e7e9ea; font-size: 15px; line-height: 1.5; margin-left: 48px; }
+    .tweet-media { margin-left: 48px; margin-top: 8px; border-radius: 16px; overflow: hidden; background: #222; position: relative; }
+    .tweet-media img { width: 100%; border-radius: 16px; display: block; }
+    .media-source { color: #71767b; font-size: 13px; margin: 4px 0 0 0; padding: 0 0 4px 0; }
+
+    .tweet-actionbar {
+      display: flex; align-items: center; justify-content: space-between; margin-left: 48px; margin-top: 8px;
+    }
+    .tweet-actionbar .action {
+      color: #71767b; font-size: 15px; display: flex; align-items: center; gap: 6px; cursor: pointer;
+      transition: color 0.18s, background 0.18s; border-radius: 20px; padding: 6px 10px;
+    }
+    .tweet-actionbar .action:hover { background: #222; color: #1d9bf0; }
+    .tweet-actionbar .action.active { background: #1a2b4c; color: #fff; }
+    .tweet-actionbar .action-group { display: flex; align-items: center; gap: 8px; }
+
+    .count { min-width: 1.5ch; text-align: right; }
+
+    /* Modals */
+    .comment-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .comment-modal {
+      background: #16181c; border-radius: 16px; padding: 24px; min-width: 320px; max-width: 640px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 16px;
+    }
+    .comment-modal textarea {
+      width: 100%; min-height: 80px; border-radius: 8px; border: 1px solid #2f3336; background: #202327;
+      color: #e7e9ea; padding: 10px; font-size: 15px; resize: vertical;
+    }
+    .comment-modal .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+    .comment-modal button {
+      padding: 8px 18px; border-radius: 20px; border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+      background: #1d9bf0; color: #fff;
+    }
+    .comment-modal button.cancel { background: #2f3336; color: #e7e9ea; }
+
+    @media (max-width: 1024px) {
+      .sidebar-left { display: none; }
+      .main-content { border-right: none; margin-left: 0; }
+    }
+    @media (max-width: 768px) {
+      .sidebar-left { display: none; }
+      .main-content { width: 100vw; min-width: 0; margin-left: 0; }
+      .search-bar-main { width: 100%; }
+      .topbar-right { gap: 6px; }
+      .pid-input { width: 130px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="x-layout">
+    <!-- Sidebar Left -->
+    <aside class="sidebar-left">
+      <div class="x-logo-main">𝕏</div>
+      <nav class="x-nav-vertical">
+        <a class="nav-item active"><span>🏠</span> Home</a>
+        <a class="nav-item"><span>🔍</span> Explore</a>
+        <a class="nav-item"><span>🔔</span> Notifications</a>
+        <a class="nav-item"><span>✉️</span> Messages</a>
+        <a class="nav-item"><span>🤖</span> Grok</a>
+        <a class="nav-item"><span>👥</span> Communities</a>
+        <a class="nav-item"><span>💎</span> Premium</a>
+        <a class="nav-item"><span>🏢</span> Verified Orgs</a>
+        <a class="nav-item"><span>👤</span> Profile</a>
+        <a class="nav-item"><span>⋯</span> More</a>
+      </nav>
+      <button class="post-btn">Post</button>
+      <div class="account-mini">
+        <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+        <div class="account-info">
+          <div class="account-name">Claire Yang <span class="verified">✔️</span></div>
+          <div class="account-handle">@ClaireYang13066</div>
+        </div>
+        <span class="account-more">⋯</span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="topbar">
+        <div class="search-bar-main">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search" />
+        </div>
+        <div class="topbar-right">
+          <span class="settings-icon">⚙️</span>
+        </div>
+      </div>
+
+      <div class="feed-list" id="newsFeed">
+        <!-- Card 1 -->
+        <div class="tweet-card" data-tweet-id="t1" data-text="Federal Reserve announces interest rate decision following two-day policy meeting. New rate set at 5.25% with gradual adjustments planned for next quarter." data-type="news" data-emotional="false">
+          <div class="tweet-header">
+            <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+            <span class="tweet-username">Reuters <span class="verified">✔️</span></span>
+            <span class="tweet-handle">@Reuters</span>
+            <span class="tweet-dot">·</span>
+            <span class="tweet-time">17m</span>
+            <span class="tweet-actions-right">⋯</span>
+          </div>
+          <div class="tweet-body">Federal Reserve announces interest rate decision following two-day policy meeting. New rate set at 5.25% with gradual adjustments planned for next quarter.</div>
+          <div class="tweet-media">
+            <img src="https://placehold.co/680x340/222/fff?text=Image" alt="media" />
+            <div class="media-source">from economictimes.com</div>
+          </div>
+          <div class="tweet-actionbar">
+            <span class="action" data-action="comment" aria-label="Comment" role="button">💬 <span class="count">12</span></span>
+            <span class="action" data-action="retweet" aria-label="Retweet" role="button">🔄 <span class="count">23</span></span>
+            <span class="action" data-action="like" aria-label="Like" role="button">❤️ <span class="count">359</span></span>
+            <span class="action" data-action="stats" aria-label="Views" role="button">👁️ <span class="count">7000</span></span>
+            <span class="action-group">
+              <span class="action" data-action="bookmark" aria-label="Bookmark" role="button">🔖</span>
+              <span class="action" data-action="share" aria-label="Share" role="button">↗️</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 2 (filtered entertainment) -->
+        <div class="tweet-card filtered" data-tweet-id="t2" data-text="New season of Stranger Things dropping next month! 🎬✨ Here's your first look at what's coming..." data-type="entertainment">
+          <div class="tweet-header">
+            <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+            <span class="tweet-username">Netflix</span>
+            <span class="tweet-handle">@netflix</span>
+            <span class="tweet-dot">·</span>
+            <span class="tweet-time">28m</span>
+            <span class="tweet-actions-right">⋯</span>
+          </div>
+          <div class="tweet-body">New season of Stranger Things dropping next month! 🎬✨ Here's your first look at what's coming...</div>
+          <div class="tweet-media">
+            <img src="https://placehold.co/680x340/222/fff?text=Image" alt="media" />
+            <div class="media-source">from netflix.com</div>
+          </div>
+          <div class="tweet-actionbar">
+            <span class="action" data-action="comment" aria-label="Comment" role="button">💬 <span class="count">5</span></span>
+            <span class="action" data-action="retweet" aria-label="Retweet" role="button">🔄 <span class="count">29</span></span>
+            <span class="action" data-action="like" aria-label="Like" role="button">❤️ <span class="count">547</span></span>
+            <span class="action" data-action="stats" aria-label="Views" role="button">👁️ <span class="count">5000</span></span>
+            <span class="action-group">
+              <span class="action" data-action="bookmark" aria-label="Bookmark" role="button">🔖</span>
+              <span class="action" data-action="share" aria-label="Share" role="button">↗️</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 3 (emotional news) -->
+        <div class="tweet-card" data-tweet-id="t3" data-text="🚨 BREAKING: EXPLOSIVE new revelations SHOCK the nation! Officials are OUTRAGED and FURIOUS about DEVASTATING developments that will DESTROY everything! This is UNBELIEVABLE! 😱🔥" data-type="news" data-emotional="true">
+          <div class="tweet-header">
+            <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+            <span class="tweet-username">Breaking Politics</span>
+            <span class="tweet-handle">@breakingpol</span>
+            <span class="tweet-dot">·</span>
+            <span class="tweet-time">9m</span>
+            <span class="tweet-actions-right">⋯</span>
+          </div>
+          <div class="tweet-body">🚨 BREAKING: EXPLOSIVE new revelations SHOCK the nation! Officials are OUTRAGED and FURIOUS about DEVASTATING developments that will DESTROY everything! This is UNBELIEVABLE! 😱🔥</div>
+          <div class="tweet-media">
+            <img src="https://placehold.co/680x340/222/fff?text=Image" alt="media" />
+            <div class="media-source">from breakingnews.com</div>
+          </div>
+          <div class="tweet-actionbar">
+            <span class="action" data-action="comment" aria-label="Comment" role="button">💬 <span class="count">11</span></span>
+            <span class="action" data-action="retweet" aria-label="Retweet" role="button">🔄 <span class="count">32</span></span>
+            <span class="action" data-action="like" aria-label="Like" role="button">❤️ <span class="count">602</span></span>
+            <span class="action" data-action="stats" aria-label="Views" role="button">👁️ <span class="count">8000</span></span>
+            <span class="action-group">
+              <span class="action" data-action="bookmark" aria-label="Bookmark" role="button">🔖</span>
+              <span class="action" data-action="share" aria-label="Share" role="button">↗️</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="tweet-card" data-tweet-id="t4" data-text="Scientists discover new species of deep-sea jellyfish in the Pacific Ocean. The creature glows in the dark and has unique tentacle patterns." data-type="news" data-emotional="false">
+          <div class="tweet-header">
+            <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+            <span class="tweet-username">BBC News</span>
+            <span class="tweet-handle">@BBCNews</span>
+            <span class="tweet-dot">·</span>
+            <span class="tweet-time">22m</span>
+            <span class="tweet-actions-right">⋯</span>
+          </div>
+          <div class="tweet-body">Scientists discover new species of deep-sea jellyfish in the Pacific Ocean. The creature glows in the dark and has unique tentacle patterns.</div>
+          <div class="tweet-media">
+            <img src="https://placehold.co/680x340/222/fff?text=Image" alt="media" />
+            <div class="media-source">from bbc.com</div>
+          </div>
+          <div class="tweet-actionbar">
+            <span class="action" data-action="comment" aria-label="Comment" role="button">💬 <span class="count">3</span></span>
+            <span class="action" data-action="retweet" aria-label="Retweet" role="button">🔄 <span class="count">32</span></span>
+            <span class="action" data-action="like" aria-label="Like" role="button">❤️ <span class="count">511</span></span>
+            <span class="action" data-action="stats" aria-label="Views" role="button">👁️ <span class="count">6000</span></span>
+            <span class="action-group">
+              <span class="action" data-action="bookmark" aria-label="Bookmark" role="button">🔖</span>
+              <span class="action" data-action="share" aria-label="Share" role="button">↗️</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 5 (filtered entertainment) -->
+        <div class="tweet-card filtered" data-tweet-id="t5" data-text="The new Avengers trailer is here! Watch Earth's mightiest heroes assemble once again. #Avengers" data-type="entertainment">
+          <div class="tweet-header">
+            <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+            <span class="tweet-username">Marvel Studios</span>
+            <span class="tweet-handle">@MarvelStudios</span>
+            <span class="tweet-dot">·</span>
+            <span class="tweet-time">13m</span>
+            <span class="tweet-actions-right">⋯</span>
+          </div>
+          <div class="tweet-body">The new Avengers trailer is here! Watch Earth's mightiest heroes assemble once again. #Avengers</div>
+          <div class="tweet-media">
+            <img src="https://placehold.co/680x340/222/fff?text=Image" alt="media" />
+            <div class="media-source">from marvel.com</div>
+          </div>
+          <div class="tweet-actionbar">
+            <span class="action" data-action="comment" aria-label="Comment" role="button">💬 <span class="count">9</span></span>
+            <span class="action" data-action="retweet" aria-label="Retweet" role="button">🔄 <span class="count">19</span></span>
+            <span class="action" data-action="like" aria-label="Like" role="button">❤️ <span class="count">448</span></span>
+            <span class="action" data-action="stats" aria-label="Views" role="button">👁️ <span class="count">7000</span></span>
+            <span class="action-group">
+              <span class="action" data-action="bookmark" aria-label="Bookmark" role="button">🔖</span>
+              <span class="action" data-action="share" aria-label="Share" role="button">↗️</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="tweet-card" data-tweet-id="t6" data-text="Apple unveils new MacBook Pro lineup with M3 chips, improved battery life, and brighter displays." data-type="news" data-emotional="false">
+          <div class="tweet-header">
+            <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
+            <span class="tweet-username">TechCrunch</span>
+            <span class="tweet-handle">@TechCrunch</span>
+            <span class="tweet-dot">·</span>
+            <span class="tweet-time">31m</span>
+            <span class="tweet-actions-right">⋯</span>
+          </div>
+          <div class="tweet-body">Apple unveils new MacBook Pro lineup with M3 chips, improved battery life, and brighter displays.</div>
+          <div class="tweet-media">
+            <img src="https://placehold.co/680x340/222/fff?text=Image" alt="media" />
+            <div class="media-source">from techcrunch.com</div>
+          </div>
+          <div class="tweet-actionbar">
+            <span class="action" data-action="comment" aria-label="Comment" role="button">💬 <span class="count">13</span></span>
+            <span class="action" data-action="retweet" aria-label="Retweet" role="button">🔄 <span class="count">20</span></span>
+            <span class="action" data-action="like" aria-label="Like" role="button">❤️ <span class="count">407</span></span>
+            <span class="action" data-action="stats" aria-label="Views" role="button">👁️ <span class="count">9000</span></span>
+            <span class="action-group">
+              <span class="action" data-action="bookmark" aria-label="Bookmark" role="button">🔖</span>
+              <span class="action" data-action="share" aria-label="Share" role="button">↗️</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ====== Logs ======
+    // 全局日志
+    const userLogs = [];
+    function logAction(action, detail = {}) {
+      const ts = new Date().toISOString();
+      const ev = { action, detail, ts };
+      userLogs.push(ev);
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ff_log', ...ev }, '*');
+      }
+    }
+
+    // ★ 父页请求“最终日志快照”时回传
+    window.addEventListener('message', (e) => {
+      const msg = e.data;
+      if (msg && msg.type === 'ff_request_dump') {
+        window.parent?.postMessage({ type: 'ff_log_bulk', payload: userLogs }, '*');
+      }
+    });
+
+    // ====== Export CSV ======
+    function exportLogsAsCSV() {
+      const pid = (document.getElementById('pidInput').value || '').trim();
+      const header = [
+        'participantId', 'startTime', 'endTime', 'actionCount',
+        'toggleCount','likeCount','commentCount','retweetCount','statsCount','bookmark','share',
+        'actions'
+      ];
+      const row = [
+        pid,
+        startTime.toISOString(),
+        endTime ? endTime.toISOString() : '',
+        userLogs.length,
+        actionCounts.toggle,
+        actionCounts.like,
+        actionCounts.comment,
+        actionCounts.retweet,
+        actionCounts.stats,
+        actionCounts.bookmark,
+        actionCounts.share,
+        JSON.stringify(userLogs).replace(/"/g, '""')
+      ];
+      const csv = [header.join(','), row.join(',')].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `user_logs_${pid || 'NA'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+
+    // ====== Actions (event delegation) ======
+    document.getElementById('newsFeed').addEventListener('click', onActionClick);
+
+    function onActionClick(e) {
+      const el = e.target.closest('.action');
+      if (!el) return;
+      const card = el.closest('.tweet-card');
+      const tweetId = card?.dataset.tweetId;
+      const tweetText = card?.dataset.text;
+      const action = el.dataset.action;
+      if (!action) return;
+      const cards = Array.from(document.querySelectorAll('#newsFeed .tweet-card'));
+      const tweetIndex = cards.indexOf(card);
+
+      // UI逻辑
+      switch (action) {
+        case 'like':
+          toggleActiveWithCount(el, 'click_like', tweetIndex);
+          break;
+        case 'retweet':
+          toggleActiveWithCount(el, 'click_retweet', tweetIndex);
+          break;
+        case 'comment':
+          el.classList.add('active');
+          el.setAttribute('aria-pressed', 'true');
+          showCommentModal(el, tweetIndex);
+          break;
+        case 'stats':
+          el.classList.add('active');
+          el.setAttribute('aria-pressed', 'true');
+          showViewsModal(el);
+          break;
+        case 'bookmark':
+          const nowActive = el.classList.toggle('active');
+          el.setAttribute('aria-pressed', String(nowActive));
+          break;
+        case 'share':
+          toggleActiveWithCount(el, 'click_share', tweetIndex);
+          break;
+        default:
+          break;
+      }
+      // 日志
+      if (action === 'like' || action === 'retweet' || action === 'bookmark' || action === 'share') {
+        // 这些用 toggleActiveWithCount 或 toggleActive
+        const isActive = el.classList.contains('active');
+        logAction('click_' + action, { tweetId, tweetText, active: isActive });
+      } else if (action === 'comment' || action === 'stats') {
+        logAction('click_' + action, { tweetId, tweetText });
+      }
+    }
+
+    function toggleActiveWithCount(el, logName, tweetIndex) {
+      const wasActive = el.classList.toggle('active');
+      el.setAttribute('aria-pressed', String(wasActive));
+      updateCount(el, wasActive ? +1 : -1);
+      // 日志由 onActionClick 统一处理
+    }
+
+    function updateCount(el, delta) {
+      const countNode = el.querySelector('.count');
+      if (!countNode) return;
+      const raw = (countNode.textContent || '').replace(/,/g, '').trim();
+      let n = parseInt(raw, 10);
+      if (Number.isNaN(n)) n = 0;
+      n = Math.max(0, n + delta);
+      countNode.textContent = n.toLocaleString();
+    }
+
+    // Share button now only toggles highlight and logs, no device share or clipboard
+
+    // ====== Comment Modal ======
+    function showCommentModal(btnEl, tweetIndex) {
+      if (document.getElementById('commentModalOverlay')) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'comment-modal-overlay';
+      overlay.id = 'commentModalOverlay';
+      overlay.innerHTML = `
+        <div class="comment-modal" role="dialog" aria-modal="true" aria-labelledby="cm-title">
+          <div id="cm-title" style="font-weight:700;font-size:18px;">Add a comment</div>
+          <textarea id="commentInput" placeholder="Write your comment..."></textarea>
+          <div class="modal-actions">
+            <button class="cancel" id="cm-cancel">Cancel</button>
+            <button id="cm-send">Send</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+      const textarea = document.getElementById('commentInput');
+      textarea.focus();
+
+      // Click out to close
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeCommentModal();
+      });
+
+      // Buttons
+      document.getElementById('cm-cancel').onclick = closeCommentModal;
+      document.getElementById('cm-send').onclick = () => sendComment(tweetIndex);
+
+      // ESC to close
+      function onEsc(ev) {
+        if (ev.key === 'Escape') closeCommentModal();
+      }
+      document.addEventListener('keydown', onEsc, { once: true });
+
+      // Save active button ref
+      window._activeCommentBtn = btnEl;
+    }
+
+    function closeCommentModal() {
+      const overlay = document.getElementById('commentModalOverlay');
+      if (overlay) overlay.remove();
+      document.body.style.overflow = '';
+      if (window._activeCommentBtn) {
+        window._activeCommentBtn.classList.remove('active');
+        window._activeCommentBtn.setAttribute('aria-pressed', 'false');
+        window._activeCommentBtn = null;
+      }
+    }
+
+    function sendComment(tweetIndex) {
+      const textarea = document.getElementById('commentInput');
+      const comment = textarea.value.trim();
+      const card = document.querySelectorAll('#newsFeed .tweet-card')[tweetIndex];
+      const tweetId = card?.dataset.tweetId;
+      const tweetText = card?.dataset.text;
+      if (comment) {
+        logAction('send_comment', { tweetId, tweetText, comment });
+        // Increment comment count on the card
+        const commentBtn = card?.querySelector('.action[data-action="comment"]');
+        if (commentBtn) updateCount(commentBtn, +1);
+        alert('Your comment has been sent:\n' + comment);
+        closeCommentModal();
+      } else {
+        textarea.focus();
+      }
+    }
+
+    // ====== Views Modal ======
+    function showViewsModal(btnEl) {
+      if (document.getElementById('viewsModalOverlay')) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'comment-modal-overlay';
+      overlay.id = 'viewsModalOverlay';
+      overlay.innerHTML = `
+        <div class="comment-modal" role="dialog" aria-modal="true" aria-labelledby="views-title">
+          <div id="views-title" style="font-weight:700;font-size:20px;text-align:center;">Views</div>
+          <div style="margin-top:12px;text-align:center;font-size:15px;color:#e7e9ea;">Times this post was seen.</div>
+          <div class="modal-actions" style="justify-content:center;margin-top:20px;">
+            <button id="vm-close">Close</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeViewsModal();
+      });
+      document.getElementById('vm-close').onclick = closeViewsModal;
+      function onEsc(ev) {
+        if (ev.key === 'Escape') closeViewsModal();
+      }
+      document.addEventListener('keydown', onEsc, { once: true });
+
+      window._activeViewsBtn = btnEl;
+    }
+
+    function closeViewsModal() {
+      const overlay = document.getElementById('viewsModalOverlay');
+      if (overlay) overlay.remove();
+      document.body.style.overflow = '';
+      if (window._activeViewsBtn) {
+        window._activeViewsBtn.classList.remove('active');
+        window._activeViewsBtn.setAttribute('aria-pressed', 'false');
+        window._activeViewsBtn = null;
+      }
+    }
+  </script>
+</body>
+</html>
