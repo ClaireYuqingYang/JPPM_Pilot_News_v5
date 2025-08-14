@@ -954,6 +954,26 @@
     img.height = 340;
 
     setImgWithFallback(img, baseName);
+    setMediaRatioByImage(img);
+function setMediaRatioByImage(img) {
+  const media = img.closest('.tweet-media');
+  if (!media) return;
+
+  const decide = () => {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) return;
+
+    const r = w / h;
+    media.classList.remove('is-landscape','is-portrait','is-square');
+
+    if (r >= 1.2)      media.classList.add('is-landscape'); // 横图
+    else if (r <= 0.9) media.classList.add('is-portrait');  // 竖图
+    else               media.classList.add('is-square');   // 方图
+  };
+
+  if (img.complete) decide();
+  else img.addEventListener('load', decide, { once: true });
+}
   });
 })();
 </script>
