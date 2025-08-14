@@ -90,11 +90,11 @@
       position: relative; filter: brightness(0.6) grayscale(0.2);
     }
     .tweet-card.filtered::after {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+      content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
       border-radius: 16px; pointer-events: none; z-index: 2;
     }
     .tweet-card.filtered:hover { filter: brightness(0.6) grayscale(0.2); }
-    .tweet-card.filtered:hover::after { background: rgba(0,0,0,0.5); }
+    .tweet-card.filtered:hover::after { background: rgba(0,0,0,0.6); }
 
     .tweet-header { display: flex; align-items: center; gap: 8px; font-size: 15px; }
     .tweet-header .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 8px; }
@@ -110,6 +110,10 @@
     /* 固定比例容器 + 裁切策略（放在旧规则后面以覆盖） */
 .tweet-media.is-landscape { aspect-ratio: 16 / 9; }  /* 横图 */
 .tweet-media.is-portrait  { aspect-ratio: 4 / 5; }   /* 竖图 */
+.tweet-media.is-portrait {
+  aspect-ratio: 4 / 5;
+  max-height: 340px;
+}
 .tweet-media.is-square    { aspect-ratio: 1 / 1; }   /* 方图 */
 
 .tweet-media img {
@@ -613,7 +617,7 @@
           <div class="tweet-actionbar">
             <span class="action" data-action="comment">💬 <span class="count">5</span></span>
             <span class="action" data-action="retweet">🔄 <span class="count">9</span></span>
-            <span class="action" data-action="like">❤️ <span class="count"> ninety</span></span><!-- optional: replace "ninety" with 90 if you prefer numbers only -->
+            <span class="action" data-action="like">❤️ <span class="count">90</span></span><!-- optional: replace "ninety" with 90 if you prefer numbers only -->
             <span class="action" data-action="stats">👁️ <span class="count">9k</span></span>
             <span class="action-group"><span class="action" data-action="bookmark">🔖</span><span class="action" data-action="share">↗️</span></span>
           </div>
@@ -984,7 +988,6 @@ function setMediaRatioByImage(img) {
     if (!img) return;
 
     const text = card.dataset.text || card.querySelector('.tweet-body')?.textContent || '';
-    if (text) img.alt = text;
     img.loading = 'lazy';
 
     setImgWithFallback(img, baseName);
