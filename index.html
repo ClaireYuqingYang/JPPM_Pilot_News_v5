@@ -107,6 +107,21 @@
     .tweet-media { margin-left: 48px; margin-top: 8px; border-radius: 16px; overflow: hidden; background: #222; position: relative; }
     .tweet-media img { width: 100%; border-radius: 16px; display: block; }
     .media-source { color: #71767b; font-size: 13px; margin: 4px 0 0 0; padding: 0 0 4px 0; }
+    /* 固定比例容器 + 裁切策略（放在旧规则后面以覆盖） */
+.tweet-media.is-landscape { aspect-ratio: 16 / 9; }  /* 横图 */
+.tweet-media.is-portrait  { aspect-ratio: 4 / 5; }   /* 竖图 */
+.tweet-media.is-square    { aspect-ratio: 1 / 1; }   /* 方图 */
+
+.tweet-media img {
+  width: 100%;
+  height: 100%;        /* 关键：填满容器高度 */
+  object-fit: cover;   /* 关键：不变形，用裁切适配 */
+  display: block;
+}
+
+/* 找不到图片时隐藏灰块 */
+.hidden { display: none !important; }
+
 
     .tweet-actionbar {
       display: flex; align-items: center; justify-content: space-between; margin-left: 48px; margin-top: 8px;
@@ -647,6 +662,7 @@
     });
 
     // ====== Export CSV ======
+    /*
     function exportLogsAsCSV() {
       const pid = (document.getElementById('pidInput').value || '').trim();
       const header = [
@@ -677,7 +693,7 @@
       a.click();
       URL.revokeObjectURL(url);
     }
-
+*/
 
     // ====== Actions (event delegation) ======
     document.getElementById('newsFeed').addEventListener('click', onActionClick);
@@ -912,6 +928,26 @@
     console.log('PID=', pid, 'order=', shuffled.map(c => c.dataset.tweetId).join(','));
   })();
   /* ==== 新逻辑结束 ==== */
+  // 根据图片自然宽高给容器打类（横/竖/方）
+function setMediaRatioByImage(img) {
+  const media = img.closest('.tweet-media');
+  if (!media) return;
+
+  const decide = () => {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) return;
+    const r = w / h;
+
+    media.classList.remove('is-landscape','is-portrait','is-square');
+    if (r >= 1.2)      media.classList.add('is-landscape'); // 横
+    else if (r <= 0.9) media.classList.add('is-portrait');  // 竖
+    else               media.classList.add('is-square');    // 方
+  };
+
+  if (img.complete) decide();
+  else img.addEventListener('load', decide, { once: true });
+}
+
 (function applyImages() {
   // 如果真实路径不是 assets/img/news/，改这里
   const BASE = 'assets/img/';
@@ -950,30 +986,10 @@
     const text = card.dataset.text || card.querySelector('.tweet-body')?.textContent || '';
     if (text) img.alt = text;
     img.loading = 'lazy';
-    img.width = 680;
-    img.height = 340;
 
     setImgWithFallback(img, baseName);
     setMediaRatioByImage(img);
-function setMediaRatioByImage(img) {
-  const media = img.closest('.tweet-media');
-  if (!media) return;
 
-  const decide = () => {
-    const w = img.naturalWidth, h = img.naturalHeight;
-    if (!w || !h) return;
-
-    const r = w / h;
-    media.classList.remove('is-landscape','is-portrait','is-square');
-
-    if (r >= 1.2)      media.classList.add('is-landscape'); // 横图
-    else if (r <= 0.9) media.classList.add('is-portrait');  // 竖图
-    else               media.classList.add('is-square');   // 方图
-  };
-
-  if (img.complete) decide();
-  else img.addEventListener('load', decide, { once: true });
-}
   });
 })();
 </script>
