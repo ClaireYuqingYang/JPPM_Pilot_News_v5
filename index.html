@@ -951,6 +951,63 @@ function setMediaRatioByImage(img) {
     tryNext();
   }
 
+  // === 批量给头像换成来源 logo（独立于 headline 配图） ===
+  (function applySourceAvatars() {
+    // 头像单独目录（你说的那个）
+    const BASE = 'assets/source/avatars/';
+
+  // 归一化：去@、去空格、小写
+  const norm = s => (s || '').toLowerCase().replace(/^@/, '').replace(/\s+/g, '');
+
+  // handle/用户名(归一化后) -> 不含扩展名的文件基名（扩展名用兜底去试）
+  const MAP = {
+    ap: 'AP',
+    askquoracom: 'AskQuoraCom',
+    bbcnews: 'BBCNews',
+    business: 'business',
+    naturalnews: 'natural news',   // 你当前文件名有空格；若改名为 naturalnews，更建议把这里也改掉
+    nytimes: 'nytimes',
+    reddit: 'Reddit',
+    reuters: 'Reuters',
+    sciam: 'sciam',
+    thefunnieslol: 'TheFunniesLOL',
+    thenationalenq2: 'TheNationalEnq2',
+    thenewspunchh: 'thenewspunchh',
+    time: 'TIME',
+    washingtonpost: 'washingtonpost'
+  };
+
+  function setWithFallback(imgEl, baseName) {
+    const exts = ['.png', '.jpg', '.jpeg', '.webp'];
+    let i = 0;
+    const tryNext = () => {
+      if (i >= exts.length) return;
+      imgEl.onerror = () => { i++; tryNext(); };
+      // encodeURIComponent 以防文件名里有空格
+      imgEl.src = BASE + encodeURIComponent(baseName + exts[i]) + '?v=1';
+    };
+    tryNext();
+  }
+
+  document.querySelectorAll('#newsFeed .tweet-card').forEach(card => {
+    const handleText = card.querySelector('.tweet-handle')?.textContent || '';
+    const nameText   = card.querySelector('.tweet-username')?.textContent || '';
+    const avatarEl   = card.querySelector('.tweet-header .avatar');
+    if (!avatarEl) return;
+
+    // 优先用 handle，找不到再用用户名
+    let key = norm(handleText);
+    if (!MAP[key]) key = norm(nameText);
+
+    const base = MAP[key];
+    if (!base) return;
+
+    setWithFallback(avatarEl, base);
+    avatarEl.alt = (handleText || nameText).trim().replace(/^@/, '') + ' logo';
+    avatarEl.loading = 'lazy';
+  });
+})();
+
   document.querySelectorAll('#newsFeed .tweet-card').forEach(card => {
     const id = card.dataset.tweetId;
     const baseName = MAP[id];
