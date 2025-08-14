@@ -118,9 +118,16 @@
   object-fit: cover;   /* 关键：不变形，用裁切适配 */
   display: block;
 }
+
+.tweet-media.is-portrait {
+    max-height: 300px; /* 控制竖图整体高度 */
+}
+
 .tweet-media.is-portrait img {
-  object-fit: contain;   /* 保留原比例显示 */
-  background-color: #000; /* 空余位置的背景色 */
+  width: auto;
+  height: 100%;
+  object-fit: contain; /* 保持比例并留空白 */
+  margin: 0 auto; /* 居中 */
 }
 
 /* 找不到图片时隐藏灰块 */
