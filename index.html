@@ -108,13 +108,9 @@
     .tweet-media img { width: 100%; border-radius: 16px; display: block; }
     .media-source { color: #71767b; font-size: 13px; margin: 4px 0 0 0; padding: 0 0 4px 0; }
     /* 固定比例容器 + 裁切策略（放在旧规则后面以覆盖） */
-.tweet-media.is-landscape { aspect-ratio: 16 / 9; }  /* 横图 */
-.tweet-media.is-portrait  { aspect-ratio: 4 / 5; }   /* 竖图 */
-.tweet-media.is-portrait {
-  aspect-ratio: 4 / 5;
-  max-height: 340px;
-}
-.tweet-media.is-square    { aspect-ratio: 1 / 1; }   /* 方图 */
+.tweet-media.is-landscape { aspect-ratio: 16 / 9; }   /* 横图 */
+.tweet-media.is-portrait  { aspect-ratio: 4 / 5; max-height: 350px; }  /* 竖图更矮 */
+.tweet-media.is-square    { aspect-ratio: 1 / 1; }    /* 方图 */
 
 .tweet-media img {
   width: 100%;
@@ -194,8 +190,8 @@
       <div class="account-mini">
         <img class="avatar" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png" alt="avatar" />
         <div class="account-info">
-          <div class="account-name">Claire Yang <span class="verified">✔️</span></div>
-          <div class="account-handle">@ClaireYang13066</div>
+          <div class="account-name">User13066<span class="verified">✔️</span></div>
+          <div class="account-handle">@user13066</div>
         </div>
         <span class="account-more">⋯</span>
       </div>
